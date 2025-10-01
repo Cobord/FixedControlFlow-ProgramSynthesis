@@ -1,0 +1,8 @@
+{
+    "python.analysis.extraPaths": [
+        "~/.local/python3.8/site-packages",
+        "~/.local/python3.9/site-packages",
+        "~/.local/python3.12/site-packages",
+        "./src"
+    ]
+}

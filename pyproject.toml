@@ -1,0 +1,15 @@
+[project]
+name = "fixedcontrolflow-programsynthesis"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "black>=25.9.0",
+    "networkx>=3.5",
+    "pydantic>=2.11.9",
+    "pytest>=8.4.2",
+]
+
+[tool.pytest.ini_options]
+pythonpath = [".","src","src/programsynthesis"]
