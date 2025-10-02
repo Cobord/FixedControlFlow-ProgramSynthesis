@@ -2,6 +2,7 @@
 Manipulating Control Flow Graph
 """
 
+import asyncio
 from typing import Callable, List, Set, Dict, Optional, Generic, TypeVar, Any
 import networkx as nx
 
@@ -179,6 +180,20 @@ class ControlFlowGraph(Generic[BlockId, Instruction]):
         if block_id not in self.__blocks:
             raise ValueError(f"Block {block_id} does not exist")
         self.__exit_blocks.add(block_id)
+
+    async def reset_instructions_according_to_conditions(self):
+        """
+        Do the corresponding reseting of instructions in each block
+        based on the prompts generated from their pre and post conditions.
+        """
+        async with asyncio.TaskGroup() as tg:
+            tasks = [
+                tg.create_task(block.reset_instructions_according_to_conditions())
+                for block in self.__blocks.values()
+            ]
+
+        _results = [task.result() for task in tasks]
+        return
 
     def get_successors(self, block_id: BlockId) -> List[BlockId]:
         """Get successor blocks of a given block."""
