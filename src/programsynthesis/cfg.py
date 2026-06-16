@@ -60,11 +60,11 @@ class BasicBlock(Generic[BlockId, Instruction]):
         self, new_conditions: PrePostConditions
     ) -> Optional[PrePostConditions]:
         """Replace the pre/post conditions returning the previous contents."""
-        self.__prepostconditions, new_conditions = (
+        self.__prepostconditions, new_conditions_opt = (
             new_conditions,
             self.__prepostconditions,
         )
-        return new_conditions
+        return new_conditions_opt
 
     async def reset_instructions_according_to_conditions(self):
         """
@@ -218,7 +218,7 @@ class ControlFlowGraph(Generic[BlockId, Instruction]):
         if self.__entry_block is None:
             return {}
         # pylint:disable=no-member
-        return nx.dominance.immediate_dominators(self.__graph, self.__entry_block)
+        return nx.immediate_dominators(self.__graph, self.__entry_block)
 
     def find_loops(self) -> List[List[BlockId]]:
         """Find all loops (cycles) in the CFG."""

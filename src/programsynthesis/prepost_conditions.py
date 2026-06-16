@@ -2,6 +2,7 @@
 Handle pre and post conditions
 """
 
+from __future__ import annotations
 from .llm_types import Prompt
 
 
@@ -9,6 +10,10 @@ class PrePostConditions:
     """
     Handle pre and post conditions
     """
+
+    @staticmethod
+    def empty() -> PrePostConditions:
+        return PrePostConditions()
 
     def create_prompt_for_block_filling(self) -> Prompt:
         """
