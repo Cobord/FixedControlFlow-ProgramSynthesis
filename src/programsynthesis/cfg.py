@@ -6,6 +6,8 @@ import asyncio
 from typing import Callable, List, Set, Dict, Optional, Generic, TypeVar, Any
 import networkx as nx
 
+from .debug_types import DebugString, DotSource
+from .llm_types import Prompt
 from .prepost_conditions import PrePostConditions
 
 BlockId = TypeVar("BlockId")
@@ -20,10 +22,12 @@ class BasicBlock(Generic[BlockId, Instruction]):
         block_id: BlockId,
         instructions: Optional[List[Instruction]] = None,
         prepostconditions: Optional[PrePostConditions] = None,
+        description: Optional[Prompt] = None,
     ) -> None:
         self.__id: BlockId = block_id
         self.__instructions: List[Instruction] = instructions or []
         self.__prepostconditions: Optional[PrePostConditions] = prepostconditions
+        self.__description: Optional[Prompt] = description
 
     @property
     def id(self) -> BlockId:
@@ -39,6 +43,16 @@ class BasicBlock(Generic[BlockId, Instruction]):
     def prepostconditions(self) -> Optional[PrePostConditions]:
         """Get the pre and post conditions."""
         return self.__prepostconditions
+
+    @property
+    def description(self) -> Optional[Prompt]:
+        """Get the natural language summary of what the block is for."""
+        return self.__description
+
+    @description.setter
+    def description(self, new_description: Optional[Prompt]) -> None:
+        """Set the natural language summary of what the block is for."""
+        self.__description = new_description
 
     def add_instruction(self, instruction: Instruction) -> None:
         """Add an instruction to the basic block."""
@@ -73,7 +87,9 @@ class BasicBlock(Generic[BlockId, Instruction]):
         """
         if not self.__prepostconditions:
             return
-        _prompt = self.__prepostconditions.create_prompt_for_block_filling()
+        _prompt = self.__prepostconditions.create_prompt_for_block_filling(
+            self.__description
+        )
         raise NotImplementedError
 
     def __repr__(self) -> str:
@@ -120,13 +136,14 @@ class ControlFlowGraph(Generic[BlockId, Instruction]):
         block_id: BlockId,
         instructions: Optional[List[Instruction]] = None,
         prepost_conditions: Optional[PrePostConditions] = None,
+        description: Optional[Prompt] = None,
     ) -> BasicBlock[BlockId, Instruction]:
         """Add a basic block to the CFG."""
         if block_id in self.__blocks:
             raise ValueError(f"Block {block_id} already exists")
 
         block = BasicBlock[BlockId, Instruction](
-            block_id, instructions, prepost_conditions
+            block_id, instructions, prepost_conditions, description
         )
         self.__blocks[block_id] = block
         self.__graph.add_node(block_id)
@@ -207,7 +224,7 @@ class ControlFlowGraph(Generic[BlockId, Instruction]):
         """Return blocks in topological order."""
         try:
             return list(nx.topological_sort(self.__graph))
-        except nx.NetworkXError as exc:
+        except nx.NetworkXUnfeasible as exc:
             raise ValueError(
                 "Graph contains cycles, cannot perform topological sort"
             ) from exc
@@ -265,7 +282,7 @@ class ControlFlowGraph(Generic[BlockId, Instruction]):
 
         return all_paths
 
-    def visualize(self) -> str:
+    def visualize(self) -> DebugString:
         """Generate a simple text representation of the CFG."""
         lines = ["Control Flow Graph:"]
         lines.append(f"Entry: {self.__entry_block}")
@@ -288,7 +305,7 @@ class ControlFlowGraph(Generic[BlockId, Instruction]):
 
         return "\n".join(lines)
 
-    def to_dot(self) -> str:
+    def to_dot(self) -> DotSource:
         """Export CFG to DOT format for visualization with Graphviz."""
         dot_graph = nx.DiGraph()
 
